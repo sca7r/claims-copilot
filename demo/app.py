@@ -1,18 +1,16 @@
 """
 Claims Copilot — Streamlit demo.
-
 Usage:
-    pip install streamlit anthropic
-    export ANTHROPIC_API_KEY=sk-ant-...
+    pip install streamlit ollama
     streamlit run demo/app.py
 """
-
+import re
 from pathlib import Path
 import streamlit as st
-from anthropic import Anthropic
+import ollama
 
 ROOT = Path(__file__).parent.parent
-MODEL = "claude-opus-4-7"
+MODEL = "deepseek-r1:7b"
 
 SKILLS = {
     "Triage a claim": "triage-claim.md",
@@ -53,25 +51,34 @@ with col2:
         placeholder="e.g., 'New FNOL — tree fell on customer's car during overnight storm. Policy MOT-2024-0192. Customer uses car for work, wants fast resolution.'",
     )
 
+    show_thinking = st.toggle("Show model reasoning", value=False)
+
     if st.button("Run", type="primary", disabled=not user_input.strip()):
         with st.spinner("Thinking…"):
             try:
-                client = Anthropic()
-                skill_key = {
-                    "Triage a claim": "triage",
-                    "Coverage check": "coverage",
-                    "Draft a letter": "letter",
-                    "Summarize a file": "summary",
-                }[skill_label]
                 system = build_system_prompt(SKILLS[skill_label])
-                resp = client.messages.create(
+
+                resp = ollama.chat(
                     model=MODEL,
-                    max_tokens=2000,
-                    system=system,
-                    messages=[{"role": "user", "content": user_input}],
+                    messages=[
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": user_input},
+                    ],
                 )
-                text = "".join(b.text for b in resp.content if b.type == "text")
+
+                raw = resp.message.content
+
+                # Split out <think>...</think> blocks from deepseek-r1
+                thinking_blocks = re.findall(r"<think>(.*?)</think>", raw, flags=re.DOTALL)
+                clean_text = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
+
                 st.markdown("### Output")
-                st.markdown(text)
+                st.markdown(clean_text)
+
+                if show_thinking and thinking_blocks:
+                    with st.expander("Model reasoning (deepseek-r1 thinking)"):
+                        for block in thinking_blocks:
+                            st.markdown(block.strip())
+
             except Exception as e:
                 st.error(f"Error: {e}")
