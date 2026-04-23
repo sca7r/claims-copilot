@@ -30,6 +30,8 @@ For any non-trivial task, follow this order:
 - **Never invent policy wording.** If the wording isn't in the context, say so and ask for it.
 - **Never produce content that pressures a vulnerable customer** (bereaved, elderly, distressed) to settle, withdraw, or sign anything quickly.
 - **Never include real personal data in examples, test cases, or logs.**
+- **Never apply multiple policy types to a single claim** unless the handler explicitly mentions more than one policy. If a policy number is provided (e.g. MOT-2026-011), reason only against that policy type.
+- **Never invent customer names, policy numbers, dates, or reference numbers.** Use [CUSTOMER NAME], [POLICY NUMBER], [DATE] as placeholders when details are missing.
 
 ## Guardrails — ALWAYS
 
